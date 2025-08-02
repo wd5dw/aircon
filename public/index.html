@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>에어컨 소리 기록</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      background-color: #121212;
+      color: #e0e0e0;
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+    .container {
+      text-align: center;
+      max-width: 500px;
+      padding: 2rem;
+      background: #1e1e1e;
+      border-radius: 1rem;
+      box-shadow: 0 0 10px rgba(0,0,0,0.4);
+    }
+    select, button {
+      padding: 0.6rem 1rem;
+      margin: 0.5rem 0;
+      border: none;
+      border-radius: 6px;
+      font-size: 1rem;
+    }
+    select {
+      background-color: #2a2a2a;
+      color: #fff;
+    }
+    button {
+      background-color: #4caf50;
+      color: white;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #45a045;
+    }
+    audio {
+      margin-top: 0.5rem;
+      width: 100%;
+    }
+    p {
+      margin-top: 1.5rem;
+      color: #ccc;
+      font-weight: bold;
+    }
+  </style>
+  <script>
+    function generateDateOptions() {
+      const select = document.getElementById('date-select');
+      const startDate = new Date(2025, 6, 31); // 2025-07-31
+      const today = new Date();
+      for (let d = new Date(startDate); d <= today; d.setDate(d.getDate() + 1)) {
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const dd = String(d.getDate()).padStart(2, '0');
+        const option = document.createElement('option');
+        option.value = `${yyyy}${mm}${dd}`;
+        option.text = `${yyyy}-${mm}-${dd}`;
+        select.add(option);
+      }
+    }
+
+    async function findAudios() {
+      const date = document.getElementById('date-select').value;
+      const container = document.getElementById('audio-container');
+      container.innerHTML = '🔍 검색 중...';
+
+      try {
+        const res = await fetch(`/api/audio/${date}`);
+        const files = await res.json();
+
+        if (files.length === 0) {
+          container.innerHTML = '❌ 해당 날짜의 오디오 파일이 없습니다.';
+          return;
+        }
+
+        container.innerHTML = '';
+        files.forEach(file => {
+          const audio = document.createElement('audio');
+          audio.controls = true;
+          audio.src = `/audio/${file}`;
+
+          const label = document.createElement('p');
+          label.textContent = file;
+
+          container.appendChild(label);
+          container.appendChild(audio);
+        });
+      } catch (err) {
+        container.innerHTML = '⚠️ 오류가 발생했습니다.';
+      }
+    }
+
+    window.onload = generateDateOptions;
+  </script>
+</head>
+<body>
+  <div class="container">
+    <h1>📅 에어컨 소리 기록</h1>
+    <label for="date-select">날짜 선택:</label><br>
+    <select id="date-select"></select><br>
+    <button onclick="findAudios()">조회</button>
+    <div id="audio-container" style="margin-top: 2rem;"></div>
+  </div>
+</body>
+</html>
